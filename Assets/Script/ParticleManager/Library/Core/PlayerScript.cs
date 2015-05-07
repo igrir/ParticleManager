@@ -20,11 +20,11 @@ public class PlayerScript : MonoBehaviour {
 			yield return new WaitForSeconds(waitSec);
 			
 			//spawn the particle
-			GameObject go2 = ParticleManager.Instance.Spawn("white_smoke", this.transform.position);
+			GameObject go2 = ParticleManager.Instance.Spawn("white_smoke", this.transform.position, 1);
 
 			x++;
 
-			//testing destroy
+			//testing pause
 			if (x > 2 && x <= 5) {
 				ParticleManager.Instance.SetPause(true);
 			}
