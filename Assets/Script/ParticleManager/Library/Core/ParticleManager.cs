@@ -36,12 +36,6 @@ namespace Tinker {
 			public bool 		isExpanding;
 		}
 
-		private class RunParticle {
-			public GameObject particleObject;
-			public float time;
-		}
-
-
 		//list of particles added by user
 		public List<ParticlePool> ParticlePrefabs = new List<ParticlePool>();
 
@@ -49,13 +43,13 @@ namespace Tinker {
 		private static Dictionary<string, ParticlePool> m_ParticleDictionary = new Dictionary<string, ParticlePool>();
 
 		//dictionary of particles' pool
-		private static Dictionary<string, List<ParticleClip>> m_particlePool = new Dictionary<string, List<ParticleClip>>();
+		private static Dictionary<string, List<ParticleClip>> m_ParticlePool = new Dictionary<string, List<ParticleClip>>();
 
 		//list of running objects
 		//TODO: Running objects placed here? [In consideration]
-		private static List<RunParticle> m_listRunparticle = new List<RunParticle>();
+		private static List<ParticleClip> m_ActiveParticle = new List<ParticleClip>();
 
-		private bool _IsPause = false;
+		private bool m_IsPause = false;
 
 		// instance getter
 		public static ParticleManager Instance {
@@ -162,7 +156,7 @@ namespace Tinker {
 		 */
 		public GameObject Spawn(string particleName, Vector3 position, float dieAfterSecond) {
 
-			if (_IsPause) return null;
+			if (m_IsPause) return null;
 
 			//get the Particle info from dictionary
 			ParticlePool particle;
@@ -170,7 +164,7 @@ namespace Tinker {
 				//get the list from the pool dictionary
 				List<ParticleClip> pool;
 				GameObject spawnObject = null;
-				if (m_particlePool.TryGetValue(particleName, out pool)) {
+				if (m_ParticlePool.TryGetValue(particleName, out pool)) {
 					
 					//search the inactive game object
 					bool found = false;
@@ -199,6 +193,9 @@ namespace Tinker {
 
 						//set the GameObject active
 						spawnObject.SetActive(true);
+
+						//add the spawned object to our active list
+						m_ActiveParticle.Add(pc);
 
 						//return the succeedly found object. YAY!
 						return spawnObject;
@@ -273,7 +270,7 @@ namespace Tinker {
 				
 				//find the particles' pool
 				List<ParticleClip> particlePool = null;
-				if (m_particlePool.TryGetValue(poolName, out particlePool)) {
+				if (m_ParticlePool.TryGetValue(poolName, out particlePool)) {
 
 					//remove the particle from list
 					foreach(ParticlePool p in ParticlePrefabs){
@@ -291,7 +288,7 @@ namespace Tinker {
 					//remove the particle in dictionary
 					m_ParticleDictionary.Remove(poolName);
 					//remove the particle in pool
-					m_particlePool.Remove(poolName);
+					m_ParticlePool.Remove(poolName);
 
 
 				}else{
@@ -318,12 +315,12 @@ namespace Tinker {
 				//initialize the GameObjects for pooling later
 				List<ParticleClip> list = new List<ParticleClip>();
 				for (int i = 0; i < particle.poolNum; i++) {
-					GameObject instance = SpawnForPool(particle.particlePrefab, list);
+					SpawnForPool(particle.particlePrefab, list);
 
 				}
 
 				//add to particle pool
-				m_particlePool.Add(particle.name, list);
+				m_ParticlePool.Add(particle.name, list);
 			}
 		}
 
@@ -354,56 +351,31 @@ namespace Tinker {
 		 * Get pause state
 		 */
 		public bool GetPause() {
-			return _IsPause;
+			return m_IsPause;
 		}
 
 		/**
-		 * Pause the current particle
-		 * Warning: This pause method still only used the ParticleSystem from Unity
+		 * Pause all particle
 		 */
 		public void SetPause(bool pause) {
 
-			_IsPause = pause;
+			m_IsPause = pause;
 
-			foreach(KeyValuePair<string, List<ParticleClip>> entry in m_particlePool) {
-				List<ParticleClip> particleClipList = entry.Value;
-
-				foreach(ParticleClip pc in particleClipList) {
-					if (pc != null & pc.gameObject.activeInHierarchy) {
-
-						//disini bermasalah karena:
-						//1: Mengharuskan menggunakan Particle System
-						//2: Mengharuskan menggunakan XffectComponent
-						pc.SetPause(pause);
-
-					}
-				}
+			foreach(ParticleClip pc in m_ActiveParticle) {
+				pc.SetPause(pause);
 			}
+
 		}
 
 		/**
-		 * Pause the current particle
-		 * Warning: This pause method still only used the ParticleSystem from Unity
+		 * Play all particle
 		 */
 		public void Play() {
 
-			foreach(KeyValuePair<string, List<ParticleClip>> entry in m_particlePool) {
-				List<ParticleClip> particleClipList = entry.Value;
-				
-				foreach(ParticleClip pc in particleClipList) {
-					if (pc != null & pc.gameObject.activeInHierarchy) {
-						
-						//disini bermasalah karena:
-						//1: Mengharuskan menggunakan Particle System
-						//2: Mengharuskan menggunakan XffectComponent
-						
-						pc.Play();
-
-					}
-				}
-				
+			foreach(ParticleClip pc in m_ActiveParticle) {
+				pc.Play();
 			}
-			
+
 		}
 
 		public void UnspawnParticle(GameObject gameObject) {
@@ -412,8 +384,11 @@ namespace Tinker {
 			if (particleClip != null) {
 				gameObject.SetActive(false);
 				particleClip.Reset();
+
+				//remove the particle from the active list
+				m_ActiveParticle.Remove(particleClip);
 			}else{
-				Debug.LogError("The object to unspawned doesn't have ParticleClip component");
+				Debug.LogError("The object to be unspawned doesn't have ParticleClip component");
 			}
 		}
 
@@ -423,7 +398,7 @@ namespace Tinker {
 		public void UnspawnParticle(string particleName) {
 			//get the list of the given name
 			List<ParticleClip> particleList;
-			if (m_particlePool.TryGetValue(particleName, out particleList)) {
+			if (m_ParticlePool.TryGetValue(particleName, out particleList)) {
 				foreach(ParticleClip pc in particleList) {
 					pc.gameObject.SetActive(false);
 				}
@@ -434,7 +409,7 @@ namespace Tinker {
 		 * Unspawn all particle
 		 */
 		public void UnspawnAll() {
-			foreach(KeyValuePair<string, List<ParticleClip>> entry in m_particlePool) {
+			foreach(KeyValuePair<string, List<ParticleClip>> entry in m_ParticlePool) {
 				List<ParticleClip> particleClipList = entry.Value;
 				
 				foreach(ParticleClip pc in particleClipList) {

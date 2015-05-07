@@ -4,9 +4,13 @@ using System.Collections;
 namespace Tinker {
 	public class XftParticleClip : ParticleClip {
 
-		
+		Xft.XffectComponent[] xfts;
+
+		public void Start () {
+			xfts = GetComponents<Xft.XffectComponent>();
+		}
+
 		public override void Play () {
-			Xft.XffectComponent[] xfts = GetComponents<Xft.XffectComponent>();
 			if (xfts != null) {
 				foreach(Xft.XffectComponent currentXfts in xfts) {
 					currentXfts.Paused = false;
@@ -16,8 +20,6 @@ namespace Tinker {
 		}
 		
 		public override void SetPause (bool isPause) {
-
-			Xft.XffectComponent[] xfts = GetComponents<Xft.XffectComponent>();
 			if (xfts != null) {
 				foreach(Xft.XffectComponent currentXfts in xfts) {
 					if (isPause) {
@@ -32,8 +34,6 @@ namespace Tinker {
 				}
 			}
 		}
-
-
 
 	}
 }

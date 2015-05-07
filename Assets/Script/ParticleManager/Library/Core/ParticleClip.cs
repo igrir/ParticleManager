@@ -12,10 +12,6 @@ namespace Tinker {
 
 		public GameObject Parent;
 
-		// Use this for initialization
-		void Start () {
-		}
-
 		public void Reset () {
 			_Time = 0;
 			Parent = null;

@@ -2,11 +2,16 @@
 using System.Collections;
 
 namespace Tinker {
-	public class ParticleSystemParticleClip : ParticleClip {
-		
+	public class UnityParticleClip : ParticleClip {
+
+		ParticleSystem[] ps;
+
+		public void Start() {
+			ps = GetComponents<ParticleSystem>();
+		}
+
 		
 		public override void Play () {
-			ParticleSystem[] ps = GetComponents<ParticleSystem>();
 			if (ps != null) {
 				foreach(ParticleSystem currentPs in ps){
 					currentPs.Play();
@@ -14,9 +19,8 @@ namespace Tinker {
 			}
 			
 		}
+
 		public override void SetPause (bool isPause) {
-			
-			ParticleSystem[] ps = GetComponents<ParticleSystem>();
 			if (ps != null) {
 				foreach(ParticleSystem currentPs in ps){
 					if (isPause) {
@@ -28,13 +32,9 @@ namespace Tinker {
 							currentPs.Play();
 						}
 					}
-					
 				}
 			}
 		}
 
-
-		
-		
 	}
 }
